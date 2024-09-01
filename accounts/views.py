@@ -115,7 +115,11 @@ def profile_D(request):
 
 
 def contact(request):
-    cat_count = Carts.objects.filter(user = request.user).count()
+    user = request.user
+    if user.is_authenticated :
+        cat_count = Carts.objects.filter(user).count()
+    else:
+        cat_count = 0
     context= {
         'cat_count':cat_count,
     }

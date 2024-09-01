@@ -85,113 +85,104 @@
 
 })
 
-$(document).ready(function() {
-    $('.btn-plus').click(function() {
-        var button = $(this);
-        var uuid = button.data('uuid');
-        console.log(uuid);
-        var quantityInput = $('.quantity-input');
+// ---------------------------- this start jqurey---
+
+$(document).ready(function(){
+
+    $('.remove-item').click(function(e) {
+        e.preventDefault();
+        let uuid = $(this).data('uuid');
+        console.log("UUID to remove:", uuid);
+        let $tbody = $(this).closest('tbody'); 
+
         $.ajax({
-            type:'GET',
-            url: '/increment_quantity',
-            data:{
-                prod_id : uuid,  
-            },
-            success: function (data) {
-                console.log(data);
-                quantityInput.val(data.qty);
-                $('#totalAmt').text('₹' + data.totalAmt.toFixed(2));
-                $('#Subtotal').text('₹' + data.Subtotal.toFixed(2));
-                $('#finalamount').text('₹' + data.finalAmount.toFixed(2));
-                
-     
-            }
-        })
-        
-    });
-});
-
-
-
-$(document).ready(function() {
-    $('.btn-minus').click(function() {
-        var button = $(this);
-        var uuid = button.data('uuid');
-        console.log(uuid);
-        var quantityInput = $('.quantity-input');
-        $.ajax({
-            type:'GET',
-            url: '/decrement_quantity',
-            data:{
-                prod_id : uuid,  
-            },
-            success: function (data) {
-                console.log(data);
-                quantityInput.val(data.qty);
-                $('#totalAmt').text('₹' + data.totalAmt.toFixed(2));
-                $('#Subtotal').text('₹' + data.Subtotal.toFixed(2));
-                $('#finalamount').text('₹' + data.finalAmount.toFixed(2));
-                
-            }
-        })
-        
-    });
-});
-
-$(document).ready(function() {
-    $('.remove-item').click(function() {
-        var button = $(this);
-        var uuid = button.data('uuid');  
-        
-        $.ajax({
-            type: 'GET',
-            url: '/remove_to_cart/',
+            type: "GET",
+            url: "/remove_to_cart/",
             data: {
-                prod_id: uuid,
-               
+                'uuid': uuid
             },
             success: function(data) {
-                $('#Subtotal').text('₹' + data.Subtotal.toFixed(2));
-                $('#finalamount').text('₹' + data.finalAmount.toFixed(2));
-                button.closest('tr').remove();
+                console.log("Response data:", data);
+                if (data.status === '200') {  // Check if status is a string
+                    $tbody.fadeOut(300, function() {
+                        $(this).remove();
+                    });
+                } else {
+                    console.error("Failed to remove item:", data);
+                }
             },
-            error: function(xhr, textStatus, errorThrown) {
-                console.log('Error:', errorThrown);
+            error: function(xhr, status, error) {
+                console.error("AJAX error:", status, error);
             }
         });
     });
-});
 
+    $('.btn-minus').click(function (e) {
+        e.preventDefault();
+        const $qty  = $(this).closest('.input-group').find('.quantity-input');
+        let qty = parseInt($qty.val())
 
-document.addEventListener('DOMContentLoaded', function() {
-    // Find the checkout button element
-    var checkoutButton = document.getElementById('checkoutButton');
-
-    // Attach a click event listener to the checkout button
-    checkoutButton.addEventListener('click', function(event) {
-        // Find the checkbox element
-        var checkbox = document.getElementById('flexCheckDefault');
-
-        // Check if the checkbox is checked
-        if (!checkbox.checked) {
-            // Prevent the default action (following the link)
-            event.preventDefault();
-
-            // Alert the user
-            alert('Please check the Default Address checkbox before proceeding to checkout.');
+        if(qty > 1) {
+            let newQty = qty - 1
+            $qty.val(newQty);
         }
+    })
+
+    $('.btn-plus').click(function (e) { 
+        e.preventDefault();
+        const $qty  = $(this).closest('.input-group').find('.quantity-input');
+        let qty = parseInt($qty.val())
+          
+        if(qty >= 10 ) {
+            alert('You can not add more than 10 items')
+        }
+        else{ 
+            let newQty = qty + 1
+            $qty.val(newQty);         
+        }  
     });
-});
 
-document.addEventListener('DOMContentLoaded', function() {
-    var checkboxes = document.querySelectorAll('#price-1, #price-2, #price-3, #price-4, #price-5');
+    $('.changeqty').click(function (e) { 
+        e.preventDefault();
+    
+        const $qty = $(this).closest('.input-group').find('.quantity-input');
+        const $id = $(this).closest('.input-group').find('#pid');
+        let qty = parseInt($qty.val())
+        const $total = $(this).closest('tr').find('#fprice').text().trim();
+        const priceText = $total.replace('₹', '').replace(',', '');
+        let price = parseFloat(priceText);
+        const $totalAmountElement = $(this).closest('tr').find('.total-amount');
+        const subtotalElement = $('.border-bottom').find('#Subtotal');
+        const finalAmount = $('.pt-2').find('#finalamount')
+        const shippingCharges = $('.justify-content-between').find('#shipingCharges');
+        
+        $.ajax({
+            type: "GET",
+            url: "/changeQty/",
+            data: {
+                'id': $id.val(),
+                'qty': qty,
+                'price': price
+            },
+            success: function (data) {
 
-    checkboxes.forEach(function(checkbox) {
-        checkbox.addEventListener('change', function() {
-            if (this.checked) {
-                // Submit the form automatically
-                document.getElementById('price-filter-form').submit();
+                let newTotal = data.total
+                subtotalElement.text(`₹${data.subtotal.toFixed(2)}`)
+                finalAmount.text(`₹${data.finalAmount.toFixed(2)}`)
+                $totalAmountElement.text(`₹${newTotal.toFixed(2)}`)
+                shippingCharges.text(data.shippingCharges)
+                if (data.subtotal >= 1000){
+                    shippingCharges.text(0)
+                } else {
+                    shippingCharges.text(data.shippingCharges)
+                }
+
+            },
+            error: function (status, error) {
+                console.error('AJAX request failed:', status, error);
             }
-        });
+        }); 
     });
-});
+
+})
+

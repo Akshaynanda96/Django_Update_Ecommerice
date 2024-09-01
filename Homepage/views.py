@@ -1,4 +1,5 @@
 from django.shortcuts import render , redirect
+from django.http import JsonResponse
 import random
 from datetime import timedelta
 from django.utils import timezone
@@ -30,7 +31,11 @@ def home(request):
      
         category = Category.objects.all()
         categoryheader = Category.objects.all()
-        cat_count = Carts.objects.filter(user = request.user).count()
+        user = request.user
+        if user.is_authenticated :
+            cat_count = Carts.objects.filter(user = user).count()
+        else:
+            cat_count = 0
         
         
         context = {
@@ -53,7 +58,6 @@ def search_box(request):
     if request.method == 'GET':
         get_obj = request.GET.get('name_search')
         if get_obj :
-
             products = Product.objects.filter(
                 Q(product_name__icontains=get_obj) |
                 Q(product_category__category_name__icontains=get_obj) |
@@ -67,8 +71,12 @@ def search_box(request):
                     'products': products,
                 }
                 return render(request, 'base/shop.html', context)
+            
             else:
-                return render(request, 'base/404.html')
+                messages.info(request, 'No products found')
+                print('No products found')
+                return redirect('home')
+                
         else:
             messages.info(request, 'Please Enter to Search')
             return redirect('home')

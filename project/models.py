@@ -4,7 +4,7 @@ from autoslug import AutoSlugField
 
 
 class Category(BaseModole):
-    category_name = models.CharField(max_length=100, unique=True)
+    category_name = models.CharField(max_length=100, unique=True , blank= True , null=True )
     slugField = AutoSlugField(populate_from='category_name' ,unique=True, blank=True, null=True)
     category_image = models.ImageField(upload_to='category',blank=True, null=True)
 
@@ -12,6 +12,7 @@ class Category(BaseModole):
         return self.category_name
 
 class SubCategory(BaseModole):
+    
     subcategory_name = models.CharField(max_length=100, unique=True)
     slugField = AutoSlugField(populate_from='subcategory_name', unique=True, blank=True, null=True)
     subcategory_image = models.ImageField(upload_to='subcategory',blank=True, null=True)

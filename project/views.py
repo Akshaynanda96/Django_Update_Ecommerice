@@ -1,4 +1,4 @@
-from django.shortcuts import render , get_object_or_404
+from django.shortcuts import render , get_object_or_404 , redirect
 from django.http import HttpResponse
 
 from project.models import *
@@ -11,7 +11,11 @@ def productsdetails(request, sulg):
         category = get_object_or_404(Category, slugField=sulg)
         products = Product.objects.filter(product_category=category)
         subcategories = SubCategory.objects.filter(products__in=products).distinct()
-        cat_count = Carts.objects.filter(user = request.user).count()
+        user = request.user
+        if user.is_authenticated :
+            cat_count = Carts.objects.filter(user =user).count()
+        else:
+            cat_count = 0
        
         context = {
         'subcat':subcategories,
@@ -29,7 +33,11 @@ def productsdetails(request, sulg):
 
 
 def SubCategory_details(request,sulg):
-    cat_count = Carts.objects.filter(user = request.user).count()
+    user = request.user
+    if user.is_authenticated :
+        cat_count = Carts.objects.filter(user = user).count()
+    else:
+        cat_count = 0
     subcategory = get_object_or_404(SubCategory, slugField=sulg)
     products = Product.objects.filter(product_subcategory=subcategory)
      
@@ -46,12 +54,16 @@ def SubCategory_details(request,sulg):
 def itemdetails(request , sulg):
     
     
-    cat_count = Carts.objects.filter(user = request.user).count()
+    user = request.user
+    if user.is_authenticated :
+        cat_count = Carts.objects.filter(user = user).count()
+    else:
+        cat_count = 0
     data = get_object_or_404(Product, slugField=sulg)
     item_in_cart = False
     if request.user.is_authenticated:
         item_in_cart  = Carts.objects.filter(Q(user = request.user), Q(product = data.udid ))
-
+        
     context = {
         'data':data,
         'item_in_cart':item_in_cart,
@@ -64,7 +76,11 @@ def itemdetails(request , sulg):
 
 def shop( request):
     products = Product.objects.all()
-    cat_count = Carts.objects.filter(user = request.user).count()
+    user = request.user
+    if user.is_authenticated :
+        cat_count = Carts.objects.filter(user = user).count()
+    else:
+        cat_count = 0
 
     
     context = {
@@ -105,3 +121,19 @@ def pricefilter(request ):
         }
 
         return render(request, 'productdetails/subshop.html', context)
+    
+    
+def updateQty(request):
+
+    if request.method == 'GET':
+        product_id = request.GET.get('product_id')
+        quantity = request.GET.get('quantity')
+        price = request.GET.get('price')
+        new = int(price) * int(quantity)
+        cart_item = Carts.objects.get(product_id=product_id, user=request.user)
+        cart_item.qty = int(quantity)
+        cart_item.total =  round(float(new), 2)
+        
+        cart_item.save()
+    
+    return render(request, 'productdetails/detail.html')

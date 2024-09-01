@@ -33,6 +33,7 @@ INSTALLED_APPS = [
     'cart',
     'checkout',
     'place_order',
+    'wishList',
 ]
 
 MIDDLEWARE = [
@@ -117,7 +118,7 @@ STATIC_URL = 'static/'
 STATICFILES_DIRS = [
     BASE_DIR / "static",
 ]
-import os
+
 MEDIA_ROOT =  'media/'
 MEDIA_URL = '/media/'
 
